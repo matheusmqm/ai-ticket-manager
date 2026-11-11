@@ -1,13 +1,11 @@
 import logging
 import re
 from pathlib import Path
-from typing import Literal
 
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, expect, sync_playwright
-from pydantic import BaseModel, Field
 
-from src.rpa.models import RpaResult
+from src.rpa.models import PedidoForm, RpaResult
 
 log = logging.getLogger("rpa.forms")
 
@@ -21,15 +19,6 @@ CONFIRMACAO = re.compile(r"Sua resposta foi registrada")
 P_CLIENTE = "Quem é o cliente?"
 P_VALOR = "Qual o valor do pedido?"
 P_QTD = "Quantos produtos tem o pedido?"
-
-
-class PedidoForm(BaseModel):
-    """Dados do formulário. Todos os campos são obrigatórios no Google Forms."""
-
-    cliente: str = Field(min_length=1)
-    valor_pedido: str = Field(pattern=r"^\d+([.,]\d{1,2})?$")
-    qtd_produtos: str = Field(pattern=r"^\d+$")
-    empresa: Literal["COMP", "ENG", "DESK"]
 
 
 def _textbox(page: Page, pergunta: str):

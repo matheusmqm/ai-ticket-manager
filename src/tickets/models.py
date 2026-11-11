@@ -13,5 +13,9 @@ class Ticket(BaseModel):
 
     @property
     def text(self) -> str:
-        """Texto-base do pedido: Summary + Description."""
-        return f"{self.summary}\n{self.description}".strip()
+        """Texto do pedido para o agente: só o Summary.
+
+        A Description é a resposta do sistema (resultado, erro ou motivo do encaminhamento
+        ao humano), então nunca entra como entrada.
+        """
+        return self.summary.strip()

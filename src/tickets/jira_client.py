@@ -196,6 +196,12 @@ class JiraClient:
             self._request("PUT", f"/rest/api/3/issue/{key}", ticket=key, json={"fields": fields})
             log.info("[%s] campos atualizados: %s", key, ", ".join(fields))
 
+    def set_description(self, key: str, text: str) -> None:
+        """Escreve a resposta do sistema na Description (substitui o conteúdo anterior)."""
+        body = {"fields": {"description": {"type": "doc", "version": 1, "content": _adf_paragraphs(text)}}}
+        self._request("PUT", f"/rest/api/3/issue/{key}", ticket=key, json=body)
+        log.info("[%s] description atualizada", key)
+
     def transition_to(self, key: str, status: str) -> None:
         """Move o chamado para um status executando a transição correspondente."""
         resp = self._request("GET", f"/rest/api/3/issue/{key}/transitions", ticket=key)

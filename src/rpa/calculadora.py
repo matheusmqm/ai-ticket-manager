@@ -3,25 +3,17 @@ import re
 import subprocess
 from decimal import Decimal, DivisionByZero, InvalidOperation
 from pathlib import Path
-from typing import Literal
 
-from pydantic import BaseModel, Field
 from pywinauto import Desktop
 from pywinauto.base_wrapper import BaseWrapper
 
-from src.rpa.models import RpaResult
+from src.rpa.models import CalculoForm, RpaResult
 
 log = logging.getLogger("rpa.calculadora")
 
 JANELA = {"class_name": "ApplicationFrameWindow", "title_re": "Calculadora|Calculator"}
 OPERACOES = {"+": "plusButton", "-": "minusButton", "*": "multiplyButton", "/": "divideButton"}
 SIMBOLOS = {"+": "+", "-": "-", "*": "x", "/": "÷"}
-
-
-class CalculoForm(BaseModel):
-    a: str = Field(pattern=r"^-?\d+([.,]\d+)?$")
-    b: str = Field(pattern=r"^-?\d+([.,]\d+)?$")
-    operacao: Literal["+", "-", "*", "/"]
 
 
 def _decimal(texto: str) -> Decimal:
