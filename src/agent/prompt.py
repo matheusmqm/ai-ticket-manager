@@ -1,4 +1,4 @@
-from src.tickets.models import Ticket
+from src.models.ticket import Ticket
 
 SYSTEM = """Você é o agente de triagem de chamados de uma operação com RPA. Para cada chamado você escolhe \
 exatamente UMA ferramenta, chamando-a uma única vez. Escolher a ferramenta é decidir a atividade:

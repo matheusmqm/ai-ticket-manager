@@ -5,3 +5,4 @@ __pycache__/
 evidencias/*
 !evidencias/.gitkeep
 CLAUDE.md
+docs/*

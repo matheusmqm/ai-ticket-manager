@@ -9,7 +9,7 @@ from typing import Any
 import httpx
 
 from src.config import Settings, get_settings
-from src.tickets.models import Ticket
+from src.models.ticket import Ticket
 
 log = logging.getLogger("jira")
 

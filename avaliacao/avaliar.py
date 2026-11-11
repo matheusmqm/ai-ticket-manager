@@ -17,7 +17,7 @@ from pathlib import Path
 
 from avaliacao.casos import CASOS
 from src.agent.agente import analisar
-from src.tickets.models import Ticket
+from src.models.ticket import Ticket
 
 GRADE = [round(0.50 + 0.05 * i, 2) for i in range(11)]  # 0.50 .. 1.00
 SAIDA = Path(__file__).parent / "resultados.json"

@@ -4,8 +4,8 @@ O solicitante escreve só o Summary; a Description é a resposta do sistema:
 resultado da automação, motivo da falha ou motivo do encaminhamento ao humano.
 """
 
-from src.agent.schema import Analise, Atividade
-from src.rpa.models import RpaResult
+from src.models.agente import Analise, Atividade
+from src.models.rpa import RpaResult
 
 ENCAMINHADO = "O chamado foi encaminhado para revisão humana."
 

@@ -1,13 +1,13 @@
 """Ferramentas (tool calling) que o LLM escolhe. Escolher a ferramenta = rotear a atividade.
 
 Os campos de dados aceitam null: o modelo deve dizer que falta o dado em vez de inventar.
-Quem decide se o dado basta é o código (src/validation/regras.py).
+Quem decide se o dado basta é o código (src/service/regras.py).
 """
 
 from typing import Any
 
-from src.agent.schema import Atividade
-from src.validation.regras import COLUNAS_PEDIDOS
+from src.models.agente import Atividade
+from src.service.regras import COLUNAS_PEDIDOS
 
 COMUNS: dict[str, Any] = {
     "categoria": {

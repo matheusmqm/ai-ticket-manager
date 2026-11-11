@@ -12,8 +12,8 @@ import duckdb
 import httpx
 
 from src.config import get_settings
-from src.rpa.models import RpaResult
-from src.validation.regras import COLUNAS_PEDIDOS, normalizar_coluna
+from src.models.rpa import RpaResult
+from src.service.regras import COLUNAS_PEDIDOS, normalizar_coluna
 
 log = logging.getLogger("consulta")
 

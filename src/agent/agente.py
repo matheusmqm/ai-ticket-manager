@@ -7,11 +7,11 @@ import anthropic
 from pydantic import ValidationError
 
 from src.agent.prompt import SYSTEM, montar_pedido
-from src.agent.schema import Analise, Atividade, Proposta
+from src.models.agente import Analise, Atividade, Proposta
 from src.agent.tools import FERRAMENTA_PARA_ATIVIDADE, FERRAMENTAS
 from src.config import get_settings
-from src.tickets.models import Ticket
-from src.validation.regras import validar_alertas, validar_dados
+from src.models.ticket import Ticket
+from src.service.regras import validar_alertas, validar_dados
 
 log = logging.getLogger("agente")
 

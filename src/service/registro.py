@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
-from src.agent.schema import Analise
+from src.models.agente import Analise
 
 log = logging.getLogger("registro")
 

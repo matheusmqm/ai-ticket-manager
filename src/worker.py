@@ -17,7 +17,6 @@ e o loop segue para o próximo.
 
 Uso (na raiz do projeto):
     uv run python -m src.worker               # roda sem parar, a cada 15 s
-    uv run python -m src.worker --uma-vez     # uma única rodada (bom para testar/demo)
     uv run python -m src.worker --intervalo 30
 """
 
@@ -28,13 +27,14 @@ from collections.abc import Callable
 
 from src.agent.agente import analisar
 from src.agent.resposta import montar_descricao
-from src.agent.schema import Analise, Atividade
-from src.consulta import consultar
-from src.registro import buscar_analise, salvar_analise
-from src.rpa.calculadora import calcular
-from src.rpa.models import CalculoForm, PedidoForm, RpaResult
-from src.rpa.pw_forms import preencher_formulario
-from src.tickets import JiraClient, JiraError, Ticket
+from src.models.agente import Analise, Atividade
+from src.service.consulta import consultar
+from src.service.registro import buscar_analise, salvar_analise
+from src.service.calculadora import calcular
+from src.models.rpa import CalculoForm, PedidoForm, RpaResult
+from src.service.pw_forms import preencher_formulario
+from src.models.ticket import Ticket
+from src.service.jira_client import JiraClient, JiraError
 
 log = logging.getLogger("worker")
 
@@ -171,7 +171,6 @@ def ciclo(jira: JiraClient) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Worker de chamados (polling no Jira)")
-    parser.add_argument("--uma-vez", action="store_true", help="roda uma rodada e sai")
     parser.add_argument("--intervalo", type=int, default=INTERVALO_PADRAO, help="segundos entre rodadas")
     args = parser.parse_args()
 
@@ -181,8 +180,6 @@ def main() -> None:
     try:
         while True:
             ciclo(jira)
-            if args.uma_vez:
-                break
             time.sleep(args.intervalo)
     except KeyboardInterrupt:
         log.info("[-] worker interrompido pelo usuário")

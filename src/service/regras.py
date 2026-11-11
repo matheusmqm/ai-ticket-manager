@@ -8,9 +8,9 @@ from decimal import Decimal
 
 from pydantic import ValidationError
 
-from src.agent.schema import Atividade, DadosCalculadora, DadosConsulta, DadosFormulario, Proposta
-from src.rpa.models import EMPRESAS, CalculoForm, PedidoForm
-from src.tickets.models import Ticket
+from src.models.agente import Atividade, DadosCalculadora, DadosConsulta, DadosFormulario, Proposta
+from src.models.rpa import EMPRESAS, CalculoForm, PedidoForm
+from src.models.ticket import Ticket
 
 # Colunas da planilha de pedidos (Google Sheets, respostas do formulário).
 COLUNAS_PEDIDOS = frozenset({"timestamp", "cliente", "valor", "qnt_produtos", "empresa"})

@@ -5,7 +5,7 @@ from pathlib import Path
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, expect, sync_playwright
 
-from src.rpa.models import PedidoForm, RpaResult
+from src.models.rpa import PedidoForm, RpaResult
 
 log = logging.getLogger("rpa.forms")
 

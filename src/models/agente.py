@@ -18,7 +18,7 @@ Prioridade = Literal["Highest", "High", "Medium", "Low", "Lowest"]
 
 
 # --- Dados extraídos por atividade. Tudo é opcional: o LLM devolve null quando o
-# --- chamado não traz o dado, e é o código (src/validation) que decide se falta algo.
+# --- chamado não traz o dado, e é o código (src/service/regras.py) que decide se falta algo.
 
 
 class DadosCalculadora(BaseModel):

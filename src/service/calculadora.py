@@ -7,7 +7,7 @@ from pathlib import Path
 from pywinauto import Desktop
 from pywinauto.base_wrapper import BaseWrapper
 
-from src.rpa.models import CalculoForm, RpaResult
+from src.models.rpa import CalculoForm, RpaResult
 
 log = logging.getLogger("rpa.calculadora")
 
