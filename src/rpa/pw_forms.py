@@ -1,10 +1,3 @@
-"""RPA web: preenche e envia o Google Forms de pedidos (Playwright).
-
-Uso: preencher_formulario(PedidoForm(...), ticket="ID-7").
-Nunca levanta exceção para o chamador: devolve um RpaResult com sucesso/erro e
-os caminhos das evidências (screenshots e trace).
-"""
-
 import logging
 import re
 from pathlib import Path
@@ -13,6 +6,8 @@ from typing import Literal
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Page, expect, sync_playwright
 from pydantic import BaseModel, Field
+
+from src.rpa.models import RpaResult
 
 log = logging.getLogger("rpa.forms")
 
@@ -35,12 +30,6 @@ class PedidoForm(BaseModel):
     valor_pedido: str = Field(pattern=r"^\d+([.,]\d{1,2})?$")
     qtd_produtos: str = Field(pattern=r"^\d+$")
     empresa: Literal["COMP", "ENG", "DESK"]
-
-
-class RpaResult(BaseModel):
-    success: bool
-    message: str
-    evidencias: list[str] = []
 
 
 def _textbox(page: Page, pergunta: str):
