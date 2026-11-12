@@ -5,7 +5,9 @@ exatamente UMA ferramenta, chamando-a uma única vez. Escolher a ferramenta é d
 
 - calcular_na_calculadora: conta aritmética entre dois números.
 - preencher_formulario_pedido: registrar um pedido no formulário de pedidos.
-- consultar_pedidos: consultar dados de pedidos (ex.: status).
+- consultar_pedidos: consultar dados de pedidos (ex.: status) ou calcular totais sobre eles (soma, \
+contagem, média, maior/menor). Quando o chamado quer um total, peça a agregação: o resultado é um \
+único número, não a lista de pedidos.
 - encaminhar_para_humano: qualquer outro caso.
 
 Regras:

@@ -44,12 +44,20 @@ class DadosFormulario(BaseModel):
 
 class Filtro(BaseModel):
     coluna: str
+    operador: str = "="  # "=", "!=", ">", ">=", "<", "<=" (validado em regras.py)
     valor: str
 
 
+class Agregacao(BaseModel):
+    operacao: str  # soma, contagem, media, maximo, minimo (validado em regras.py)
+    coluna: str | None = None  # obrigatória, exceto na contagem
+
+
 class DadosConsulta(BaseModel):
-    colunas: list[str] = []  # colunas que o pedido quer ver
-    filtros: list[Filtro] = []  # condições (ex.: pedido_id = 123)
+    colunas: list[str] = []  # colunas que o pedido quer ver (ignorado quando há agregação)
+    filtros: list[Filtro] = []  # condições (ex.: cliente = Jonas, valor > 1000)
+    agregacao: Agregacao | None = None  # quando o pedido quer um total/contagem/média, não a lista
+    agrupar_por: list[str] = []  # só com agregação (ex.: total por empresa)
 
 
 class Proposta(BaseModel):
