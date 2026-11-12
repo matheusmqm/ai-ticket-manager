@@ -1,6 +1,12 @@
 from pydantic import BaseModel
 
 
+class Anexo(BaseModel):
+    id: str
+    filename: str
+    mime_type: str = ""
+
+
 class Ticket(BaseModel):
     key: str
     summary: str
@@ -10,6 +16,10 @@ class Ticket(BaseModel):
     area: str | None = None
     categoria: str | None = None
     decisao: str | None = None
+    created: str | None = None
+    # preenchidos só quando a busca pede o histórico (expand=changelog)
+    passou_por_falhou: bool = False
+    anexos: list[Anexo] = []
 
     @property
     def text(self) -> str:

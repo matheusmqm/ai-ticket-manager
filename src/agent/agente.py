@@ -7,7 +7,7 @@ import anthropic
 from pydantic import ValidationError
 
 from src.agent.prompt import SYSTEM, montar_pedido
-from src.models.agente import Analise, Atividade, Proposta
+from src.models.agente import CATEGORIA_POR_ATIVIDADE, Analise, Atividade, Proposta
 from src.agent.tools import FERRAMENTA_PARA_ATIVIDADE, FERRAMENTAS
 from src.config import get_settings
 from src.models.ticket import Ticket
@@ -16,8 +16,7 @@ from src.service.regras import validar_alertas, validar_dados
 log = logging.getLogger("agente")
 
 MAX_TOKENS = 4096
-
-
+LIMIAR_CONFIANCA = 0.6  # abaixo disso, o chamado vai para revisão humana
 
 
 class AgenteError(Exception):
@@ -69,7 +68,7 @@ def _falha_do_agente(ticket: Ticket, motivo: str) -> Analise:
     return Analise(
         numero_chamado=ticket.key,
         area=ticket.area,
-        categoria="Outros",
+        categoria=CATEGORIA_POR_ATIVIDADE[Atividade.HUMANO],
         atividade=Atividade.HUMANO,
         prioridade="Medium",
         resumo=ticket.summary[:255],
@@ -82,8 +81,11 @@ def _falha_do_agente(ticket: Ticket, motivo: str) -> Analise:
     )
 
 
-def analisar(ticket: Ticket, client: anthropic.Anthropic | None = None) -> Analise:
-    """Analisa o chamado. A confiança é registrada na análise, mas não bloqueia a automação."""
+def analisar(
+    ticket: Ticket, client: anthropic.Anthropic | None = None, limiar: float = LIMIAR_CONFIANCA
+) -> Analise:
+    """Analisa o chamado. Confiança abaixo do limiar bloqueia a automação (vai para o humano).
+    A avaliação usa limiar=0 para medir o agente sem o limiar."""
     try:
         try:
             atividade, proposta = _chamar_llm(ticket, client)
@@ -99,12 +101,14 @@ def analisar(ticket: Ticket, client: anthropic.Anthropic | None = None) -> Anali
     if atividade is not Atividade.HUMANO:
         erros = validar_dados(atividade, proposta.dados)
         alertas = validar_alertas(ticket, proposta)
+        if proposta.confianca < limiar:
+            alertas.append(f"confiança {proposta.confianca:.2f} abaixo do limiar {limiar:.2f}")
 
     automatizar = atividade is not Atividade.HUMANO and not erros and not alertas
     analise = Analise(
         numero_chamado=ticket.key,
         area=ticket.area,
-        categoria=proposta.categoria,
+        categoria=CATEGORIA_POR_ATIVIDADE[atividade],
         atividade=atividade,
         prioridade=proposta.prioridade,
         resumo=proposta.resumo,

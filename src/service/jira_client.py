@@ -9,7 +9,7 @@ from typing import Any
 import httpx
 
 from src.config import Settings, get_settings
-from src.models.ticket import Ticket
+from src.models.ticket import Anexo, Ticket
 
 log = logging.getLogger("jira")
 
@@ -42,6 +42,15 @@ def _adf_to_text(node: Any) -> str:
     parts = [_adf_to_text(child) for child in node.get("content", [])]
     sep = "\n" if node.get("type") in {"doc", "bulletList", "orderedList"} else ""
     return sep.join(parts)
+
+
+def _passou_por_status(issue: dict[str, Any], status: str) -> bool:
+    """True se o histórico (expand=changelog) mostra uma transição para o status."""
+    for history in (issue.get("changelog") or {}).get("histories", []):
+        for item in history.get("items", []):
+            if item.get("field") == "status" and item.get("toString") == status:
+                return True
+    return False
 
 
 class JiraClient:
@@ -111,7 +120,7 @@ class JiraClient:
     def _field_list(self) -> str:
         f = self.field_ids()
         extra = [v for v in f.values() if v]
-        return ",".join(["summary", "description", "status", "priority", *extra])
+        return ",".join(["summary", "description", "status", "priority", "created", "attachment", *extra])
 
     # ---------------------------------------------------------------- leitura
 
@@ -131,18 +140,32 @@ class JiraClient:
             area=option("area"),
             categoria=option("categoria"),
             decisao=option("decisao"),
+            created=f.get("created"),
+            passou_por_falhou=_passou_por_status(issue, "Falhou"),
+            anexos=[
+                Anexo(id=str(a["id"]), filename=a.get("filename", ""), mime_type=a.get("mimeType", ""))
+                for a in f.get("attachment") or []
+            ],
         )
 
     def get_ticket(self, key: str) -> Ticket:
-        resp = self._request("GET", f"/rest/api/3/issue/{key}", ticket=key, params={"fields": self._field_list()})
+        resp = self._request("GET", f"/rest/api/3/issue/{key}", ticket=key, params={"fields": self._field_list(), "expand": "changelog"})
         return self._to_ticket(resp.json())
 
-    def search(self, jql: str, max_results: int = 50) -> list[Ticket]:
-        """Busca por JQL em /search/jql (paginação por token, sem total)."""
+    def attachment_content(self, key: str, attachment_id: str) -> bytes:
+        """Baixa o conteúdo de um anexo. O Jira responde com redirecionamento para o serviço de mídia."""
+        resp = self._request("GET", f"/rest/api/3/attachment/content/{attachment_id}", ticket=key, follow_redirects=True)
+        return resp.content
+
+    def search(self, jql: str, max_results: int = 50, *, changelog: bool = False) -> list[Ticket]:
+        """Busca por JQL em /search/jql (paginação por token, sem total).
+        changelog=True traz o histórico de status junto (Ticket.passou_por_falhou)."""
         tickets: list[Ticket] = []
         token: str | None = None
         while True:
             params: dict[str, Any] = {"jql": jql, "maxResults": max_results, "fields": self._field_list()}
+            if changelog:
+                params["expand"] = "changelog"
             if token:
                 params["nextPageToken"] = token
             data = self._request("GET", "/rest/api/3/search/jql", params=params).json()
@@ -150,6 +173,11 @@ class JiraClient:
             token = data.get("nextPageToken")
             if data.get("isLast", True) or not token:
                 return tickets
+
+    def all_tickets(self, *, changelog: bool = False) -> list[Ticket]:
+        """Todos os chamados do projeto, mais recentes primeiro."""
+        jql = f'project = "{self._s.jira_project_key}" ORDER BY created DESC'
+        return self.search(jql, changelog=changelog)
 
     def tickets_in_status(self, status: str) -> list[Ticket]:
         """Chamados de uma fila (status), mais antigos primeiro."""

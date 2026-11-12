@@ -10,11 +10,6 @@ from src.models.agente import Atividade
 from src.service.regras import COLUNAS_PEDIDOS
 
 COMUNS: dict[str, Any] = {
-    "categoria": {
-        "type": "string",
-        "enum": ["Abertura", "Atualização", "Consulta", "Outros"],
-        "description": "Tipo do pedido.",
-    },
     "prioridade": {
         "type": "string",
         "enum": ["Highest", "High", "Medium", "Low", "Lowest"],
