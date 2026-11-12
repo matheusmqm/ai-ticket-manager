@@ -28,7 +28,7 @@ def rodar(rodadas: int) -> list[dict]:
     for caso in CASOS:
         for r in range(rodadas):
             ticket = Ticket(key="AV-1", summary=caso.texto, status="Novo", area=caso.area)
-            a = analisar(ticket)
+            a = analisar(ticket, limiar=0.0)  # sem limiar: a grade abaixo é que o calcula
             registros.append(
                 {
                     "caso": caso.id,

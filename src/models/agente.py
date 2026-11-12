@@ -13,7 +13,15 @@ class Atividade(StrEnum):
     HUMANO = "humano"
 
 
-Categoria = Literal["Abertura", "Atualização", "Consulta", "Outros"]
+Categoria = Literal["Calculadora", "Consulta", "Inserção", "Humano"]
+# Categoria (dropdown do Jira) = qual automação o chamado pede. Derivada da atividade em código,
+# não escolhida pelo LLM. Quem separa "foi para o humano" é o campo Decisão.
+CATEGORIA_POR_ATIVIDADE: dict[Atividade, Categoria] = {
+    Atividade.CALCULADORA: "Calculadora",
+    Atividade.CONSULTA: "Consulta",
+    Atividade.FORMULARIO: "Inserção",
+    Atividade.HUMANO: "Humano",
+}
 Prioridade = Literal["Highest", "High", "Medium", "Low", "Lowest"]
 
 
@@ -47,7 +55,6 @@ class DadosConsulta(BaseModel):
 class Proposta(BaseModel):
     """Campos comuns que o LLM preenche em qualquer ferramenta."""
 
-    categoria: Categoria
     prioridade: Prioridade
     resumo: str
     justificativa: str
