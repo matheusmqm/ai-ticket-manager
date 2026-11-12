@@ -4,6 +4,7 @@ Cada atividade tem um validador de detalhes que devolve a lista de erros (vazia 
 Funções puras: sem rede, sem LLM, fáceis de testar.
 """
 
+import re
 from decimal import Decimal
 
 from pydantic import ValidationError
@@ -14,6 +15,11 @@ from src.models.ticket import Ticket
 
 # Colunas da planilha de pedidos (Google Sheets, respostas do formulário).
 COLUNAS_PEDIDOS = frozenset({"timestamp", "cliente", "valor", "qnt_produtos", "empresa"})
+COLUNAS_NUMERICAS = frozenset({"valor", "qnt_produtos"})
+COLUNAS_AGRUPAMENTO = frozenset({"cliente", "empresa"})
+OPERADORES_FILTRO = ("=", "!=", ">", ">=", "<", "<=")
+OPERADORES_COMPARACAO = frozenset({">", ">=", "<", "<="})  # só fazem sentido em colunas numéricas
+OPERACOES_AGREGACAO = ("soma", "contagem", "media", "maximo", "minimo")
 
 
 def _vazio(valor: str | None) -> bool:
@@ -72,18 +78,49 @@ def normalizar_coluna(nome: str) -> str:
 
 def validar_consulta(dados: DadosConsulta) -> list[str]:
     erros = []
-    usadas = [*dados.colunas, *(f.coluna for f in dados.filtros)]
+    agg = dados.agregacao
+    usadas = [*dados.colunas, *(f.coluna for f in dados.filtros), *dados.agrupar_por]
+    if agg and agg.coluna:
+        usadas.append(agg.coluna)
     inexistentes = sorted({c for c in usadas if normalizar_coluna(c) not in COLUNAS_PEDIDOS})
     if inexistentes:
         erros.append(
             f"coluna(s) inexistente(s) na base: {', '.join(inexistentes)} "
             f"(colunas válidas: {', '.join(sorted(COLUNAS_PEDIDOS))})"
         )
-    if not dados.filtros:
+        return erros  # o resto depende de as colunas existirem
+
+    if not dados.filtros and not agg:
         erros.append("consulta sem filtro: o chamado não diz qual pedido consultar")
-    elif any(_vazio(f.valor) for f in dados.filtros):
-        erros.append("filtro sem valor")
+    for f in dados.filtros:
+        coluna = normalizar_coluna(f.coluna)
+        if _vazio(f.valor):
+            erros.append("filtro sem valor")
+        elif f.operador not in OPERADORES_FILTRO:
+            erros.append(f"operador de filtro inválido: '{f.operador}' (válidos: {', '.join(OPERADORES_FILTRO)})")
+        elif coluna in COLUNAS_NUMERICAS and not _numero_valido(f.valor):
+            erros.append(f"filtro em '{coluna}' exige número, recebeu '{f.valor}'")
+        elif coluna not in COLUNAS_NUMERICAS and f.operador in OPERADORES_COMPARACAO:
+            erros.append(f"operador '{f.operador}' só vale para colunas numéricas, não para '{coluna}'")
+
+    if agg:
+        if agg.operacao not in OPERACOES_AGREGACAO:
+            erros.append(f"operação de agregação inválida: '{agg.operacao}' (válidas: {', '.join(OPERACOES_AGREGACAO)})")
+        elif agg.operacao != "contagem":
+            if _vazio(agg.coluna):
+                erros.append(f"{agg.operacao} sem coluna: o chamado não diz o que somar/calcular (valor ou quantidade de produtos?)")
+            elif normalizar_coluna(agg.coluna) not in COLUNAS_NUMERICAS:
+                erros.append(f"não dá para calcular {agg.operacao} da coluna '{agg.coluna}' (só valor e qnt_produtos)")
+        invalidas = sorted({c for c in dados.agrupar_por if normalizar_coluna(c) not in COLUNAS_AGRUPAMENTO})
+        if invalidas:
+            erros.append(f"não dá para agrupar por: {', '.join(invalidas)} (válidas: {', '.join(sorted(COLUNAS_AGRUPAMENTO))})")
+    elif dados.agrupar_por:
+        erros.append("agrupamento sem agregação: o chamado não diz o que calcular por grupo")
     return erros
+
+
+def _numero_valido(texto: str) -> bool:
+    return re.fullmatch(r"-?\d+([.,]\d+)?", texto.strip()) is not None
 
 
 def validar_dados(atividade: Atividade, dados: dict) -> list[str]:

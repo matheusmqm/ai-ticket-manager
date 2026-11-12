@@ -3,7 +3,7 @@ agente e a validação possam importá-los sem carregar os robôs."""
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 EMPRESAS = ("COMP", "ENG", "DESK")
 
@@ -23,6 +23,12 @@ class PedidoForm(BaseModel):
     valor_pedido: str = Field(pattern=r"^\d+([.,]\d{1,2})?$")
     qtd_produtos: str = Field(pattern=r"^\d+$")
     empresa: Literal["COMP", "ENG", "DESK"]
+
+    @field_validator("empresa", mode="before")
+    @classmethod
+    def _empresa_maiuscula(cls, valor: object) -> object:
+        """Aceita 'eng', 'Eng', 'eNG' etc.: o formulário só tem as opções em maiúsculo."""
+        return valor.strip().upper() if isinstance(valor, str) else valor
 
 
 class CalculoForm(BaseModel):

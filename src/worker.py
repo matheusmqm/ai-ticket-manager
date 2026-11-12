@@ -76,8 +76,15 @@ def _rodar_robo(analise: Analise, chamado: str) -> RpaResult:
         if analise.atividade is Atividade.FORMULARIO:
             return preencher_formulario(PedidoForm(**dados), ticket=chamado)
         if analise.atividade is Atividade.CONSULTA:
-            filtros = [(f["coluna"], f["valor"]) for f in dados.get("filtros", [])]
-            return consultar(dados.get("colunas", []), filtros, ticket=chamado)
+            filtros = [(f["coluna"], f.get("operador", "="), f["valor"]) for f in dados.get("filtros", [])]
+            agg = dados.get("agregacao")
+            return consultar(
+                dados.get("colunas", []),
+                filtros,
+                ticket=chamado,
+                agregacao=(agg["operacao"], agg.get("coluna")) if agg else None,
+                agrupar_por=dados.get("agrupar_por", []),
+            )
     except Exception as exc:  # noqa: BLE001
         log.exception("[%s] erro inesperado no robô", chamado)
         return RpaResult(success=False, message=f"erro inesperado no robô: {exc}")

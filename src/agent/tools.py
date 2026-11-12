@@ -7,7 +7,13 @@ Quem decide se o dado basta é o código (src/service/regras.py).
 from typing import Any
 
 from src.models.agente import Atividade
-from src.service.regras import COLUNAS_PEDIDOS
+from src.service.regras import (
+    COLUNAS_AGRUPAMENTO,
+    COLUNAS_NUMERICAS,
+    COLUNAS_PEDIDOS,
+    OPERACOES_AGREGACAO,
+    OPERADORES_FILTRO,
+)
 
 COMUNS: dict[str, Any] = {
     "prioridade": {
@@ -82,25 +88,68 @@ FERRAMENTAS: list[dict[str, Any]] = [
     ),
     _ferramenta(
         "consultar_pedidos",
-        "O chamado pede para consultar informações de pedidos (ex.: status de um pedido) na base de pedidos. "
-        f"Colunas da base: {', '.join(sorted(COLUNAS_PEDIDOS))}. Use esses nomes quando o chamado se referir "
-        "claramente a uma delas (ex.: 'pedidos do cliente Jonas' -> cliente = Jonas). Se o chamado pedir algo que não está "
-        "nessa lista, copie o nome como o solicitante escreveu; não troque por outra coluna.",
+        "O chamado pede para consultar informações de pedidos (ex.: status de um pedido, total comprado por um "
+        "cliente) na base de pedidos. "
+        f"Colunas da base: {', '.join(sorted(COLUNAS_PEDIDOS))} (numéricas: {', '.join(sorted(COLUNAS_NUMERICAS))}). "
+        "Use esses nomes quando o chamado se referir claramente a uma delas (ex.: 'pedidos do cliente Jonas' -> "
+        "cliente = Jonas; 'quantidade de produtos' -> qnt_produtos; 'valor do pedido' -> valor). Se o chamado pedir "
+        "algo que não está nessa lista, copie o nome como o solicitante escreveu; não troque por outra coluna. "
+        "Quando o chamado pede um total, soma, quantidade de pedidos, média, maior ou menor valor, preencha "
+        "'agregacao' (o resultado será um único número) em vez de pedir a lista de pedidos.",
         {
             "colunas": {
                 "type": "array",
                 "items": {"type": "string"},
-                "description": "Colunas que o chamado quer ver, com o nome que o solicitante usou. Lista vazia se não disser.",
+                "description": "Colunas que o chamado quer ver, com o nome que o solicitante usou. Lista vazia se não "
+                "disser ou se houver agregação.",
             },
             "filtros": {
                 "type": "array",
-                "description": "Condições da consulta, uma por critério citado no chamado (ex.: cliente = Jonas).",
+                "description": "Condições da consulta, uma por critério citado no chamado (ex.: cliente = Jonas, "
+                "valor > 1000). Lista vazia se o chamado pede o total geral.",
                 "items": {
                     "type": "object",
-                    "properties": {"coluna": {"type": "string"}, "valor": {"type": "string"}},
-                    "required": ["coluna", "valor"],
+                    "properties": {
+                        "coluna": {"type": "string"},
+                        "operador": {
+                            "type": "string",
+                            "enum": list(OPERADORES_FILTRO),
+                            "description": "Use '=' se o chamado não indicar comparação. > < >= <= só para colunas numéricas.",
+                        },
+                        "valor": {"type": "string"},
+                    },
+                    "required": ["coluna", "operador", "valor"],
                     "additionalProperties": False,
                 },
+            },
+            "agregacao": {
+                "anyOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "operacao": {
+                                "type": "string",
+                                "enum": list(OPERACOES_AGREGACAO),
+                                "description": "soma (total), contagem (quantos pedidos), media, maximo (maior), minimo (menor).",
+                            },
+                            "coluna": _str_nulo(
+                                "Coluna numérica a calcular (valor ou qnt_produtos). Null na contagem de pedidos."
+                            ),
+                        },
+                        "required": ["operacao", "coluna"],
+                        "additionalProperties": False,
+                    },
+                    {"type": "null"},
+                ],
+                "description": "Preencha quando o chamado pede total/soma/contagem/média/maior/menor. "
+                "Null quando pede a lista de pedidos. Se o chamado pedir 'total' sem dizer se é valor ou "
+                "quantidade de produtos, deixe coluna null (não escolha por conta própria).",
+            },
+            "agrupar_por": {
+                "type": "array",
+                "items": {"type": "string", "enum": sorted(COLUNAS_AGRUPAMENTO)},
+                "description": "Só com agregação: quando o chamado quer o resultado por cliente ou por empresa "
+                "(ex.: 'total por empresa'). Lista vazia caso contrário.",
             },
         },
     ),

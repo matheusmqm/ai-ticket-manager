@@ -45,7 +45,8 @@ def preencher_formulario(
     dados: PedidoForm,
     ticket: str = "-",
     evidencias_dir: str | Path = "evidencias",
-    headless: bool = True,
+    headless: bool = False,
+    slow_mo_ms: int = 500,
     timeout_ms: int = 15_000,
 ) -> RpaResult:
     """Preenche o formulário, envia e confirma o registro da resposta."""
@@ -55,7 +56,8 @@ def preencher_formulario(
 
     try:
         with sync_playwright() as pw:
-            browser = pw.chromium.launch(headless=headless)
+            # slow_mo atrasa cada ação para dar tempo de ver os cliques na tela
+            browser = pw.chromium.launch(headless=headless, slow_mo=slow_mo_ms)
             # locale fixo: o texto dos botões ("Enviar") depende do idioma do navegador
             context = browser.new_context(locale="pt-BR")
             context.set_default_timeout(timeout_ms)
