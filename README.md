@@ -30,6 +30,52 @@ O projeto tem três partes:
 | `backend/` | API (FastAPI) usada pelo painel |
 | `frontend/` | Painel web (React + Vite): criar chamado, acompanhar e ver métricas |
 
+## Veja funcionando
+
+Capturas reais da execução, com chamados de verdade no Jira.
+
+### Painel web
+
+**Novo chamado:** o solicitante escolhe a área e descreve o pedido com as próprias palavras.
+
+![Tela de novo chamado](assets/painel-criar.png)
+
+**Acompanhamento:** cada pedido com a etapa atual, a automação escolhida e a decisão da IA (`Automatizar` ou `Revisão humana`).
+
+![Tela de acompanhamento](assets/painel-acompanhar.png)
+
+**Métricas:** quanto o robô resolve, quanto vai para a equipe e em qual tipo de automação ele falha. Os números saem direto do Jira.
+
+![Tela de métricas](assets/painel-metricas.png)
+
+### Robôs (RPA) com evidência
+
+Cada execução gera screenshots que são anexados ao chamado no Jira.
+
+| Calculadora do Windows (pywinauto) | Google Forms (Playwright) |
+|---|---|
+| ![Calculadora com 5 + 12 = 17](assets/rpa-calculadora.png) | ![Formulário preenchido pelo robô](assets/rpa-formulario-preenchido.png) |
+| Chamado `ID-36`: *"somar 5 com 12"* → resultado **17** | Chamado `ID-21`: dados extraídos do texto e preenchidos no formulário |
+
+Depois do envio, o robô captura também a tela de confirmação:
+
+![Confirmação de envio do formulário](assets/rpa-formulario-confirmacao.png)
+
+### A IA não inventa dado
+
+Quando falta informação, o chamado vai para uma pessoa em vez de o robô chutar. Exemplo real (`ID-35`, *"Somar 5 com"*): a IA extraiu `a = 5`, `b = null` e decidiu **revisão humana**, com o motivo registrado no chamado:
+
+```json
+{
+  "numero_chamado": "ID-35",
+  "categoria": "Calculadora",
+  "dados_extraidos": { "a": "5", "b": null, "operacao": "+" },
+  "decisao": "humano",
+  "justificativa": "Pedido de soma na calculadora, mas o segundo número não foi informado no chamado.",
+  "erros": ["dado ausente no chamado: segundo número"]
+}
+```
+
 ## Pré-requisitos
 
 - **Windows** (a automação da Calculadora usa pywinauto)
